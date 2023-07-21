@@ -1,6 +1,7 @@
 ﻿using FullCalenderApp.Data;
 using FullCalenderApp.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
 namespace FullCalenderApp.Controllers
@@ -19,9 +20,10 @@ namespace FullCalenderApp.Controllers
             return View();
         }
 
-        public IActionResult GetEvents()
+        public async Task<IActionResult> GetEvents()
         {
-            var events = _context.Events.Select(e => new
+            var events = await _context.Events
+                .Select(e => new
             {
                 eventId = e.EventId,
                 title = e.Subject,
@@ -31,14 +33,14 @@ namespace FullCalenderApp.Controllers
                 themeColor = e.ThemeColor,
                 isFullDay = e.IsFullDay,
               
-            }).ToList();
+            }).ToListAsync();
 
             return Json(events);
         }
 
 
         [HttpPost]
-        public JsonResult SaveEvent(Event e)
+        public async Task<IActionResult> SaveEvent(Event e)
         {
             var status = false;
 
@@ -47,7 +49,7 @@ namespace FullCalenderApp.Controllers
                 if (e.EventId > 0)
                 {
                     // Update the event
-                    var v = _context.Events.Where(a => a.EventId == e.EventId).FirstOrDefault();
+                    var v =  await _context.Events.Where(a => a.EventId == e.EventId).FirstOrDefaultAsync();
                     if (v != null)
                     {
                         v.Subject = e.Subject;
@@ -60,10 +62,10 @@ namespace FullCalenderApp.Controllers
                 }
                 else
                 {
-                    _context.Events.Add(e);
+                   _context.Events.Add(e);
                 }
 
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 status = true;
             }
             catch (Exception ex)
