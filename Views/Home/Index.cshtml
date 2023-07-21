@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='utf-8' />
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+
+                timeZone: 'Europe/Stockholm',
+                locale: 'sv', // Set the locale to Swedish
+
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay',
+                },
+                buttonText: {
+                    prev: 'Föregående',
+                    next: 'Nästa',
+                    today: 'Idag',
+                    month: 'Månad',
+                    week: 'Vecka',
+                    day: 'Dag',
+                },
+
+                //set default color for event (bordercolor ?)
+                eventColor: 'green',
+
+
+                //set color for event from value in database
+                eventDidMount: function (info) {
+                    // Get the event object
+                    var event = info.event;
+
+                    // Set the background color for the event using the themeColor property
+                    event.setProp('backgroundColor', event.extendedProps.themeColor);
+                },
+
+                editable: true, // Allow events to be dragged and resized
+                selectable: true, // Enable date selection
+
+                // Add events/fetch from action/database
+                events: {
+                    url: 'Home/GetEvents',
+                    failure: function () {
+                        alert('Failed to retrieve events. Please try again later');
+                    }
+                    
+                },
+            });
+            calendar.render();
+        });
+
+    </script>
+</head>
+<body>
+
+    @*Display calandar*@
+    <div id='calendar'></div>
+
+    @*Event creation form*@
+    <div id="eventForm" style="display: none;">
+        <form id="createEventForm" method="post" asp-action="Create" asp-controller="Events">
+            <input type="text" name="Subject" placeholder="Subject" required />
+            <input type="datetime-local" name="Start" placeholder="Start" required />
+            <input type="datetime-local" name="End" placeholder="End" required />
+            <input type="text" name="Description" placeholder="Description" />
+            <input type="text" name="ThemeColor" placeholder="Color" />
+            <input class="form-check-input" type="checkbox" name="IsFullDay" /> Full day
+
+            <input type="submit" value="Create Event" />
+        </form>
+    </div>
+
+
+    @*Button to show the event creation form*@
+@*    <button id="showEventFormButton">Create Event</button>
+
+    <script>
+        // Show the event creation form when the button is clicked
+        document.getElementById('showEventFormButton').addEventListener('click', function () {
+            document.getElementById('eventForm').style.display = 'block';
+        });
+    </script>*@
+</body>
+</html>
