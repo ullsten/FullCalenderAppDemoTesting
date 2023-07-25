@@ -22,7 +22,7 @@ namespace FullCalenderApp.Controllers
         // GET: Events
         public async Task<IActionResult> Index()
         {
-              return _context.Events != null ? 
+            return _context.Events != null ? 
                           View(await _context.Events.ToListAsync()) :
                           Problem("Entity set 'ApplicationDbContext.Events'  is null.");
         }

@@ -77,7 +77,51 @@ namespace FullCalenderApp.Controllers
                 return Json(new { status = status, message = "An error occurred while saving the event." });
             }
 
-            return Json(new { status = status, message = "Event saved successfully." });
+            // return Json(new { status = status, message = "Event saved successfully." });
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateEvent(Event e)
+        {
+            var status = false;
+
+            try
+            {
+                if (e.EventId > 0)
+                {
+                    // Update the event
+                    var existingEvent = await _context.Events.FindAsync(e.EventId);
+                    if (existingEvent != null)
+                    {
+                        existingEvent.Subject = e.Subject;
+                        existingEvent.Start = e.Start;
+                        existingEvent.End = e.End;
+                        existingEvent.Description = e.Description;
+                        existingEvent.IsFullDay = e.IsFullDay;
+                        existingEvent.ThemeColor = e.ThemeColor;
+                    }
+                }
+                else
+                {
+                    await _context.Events.AddAsync(e);
+                }
+
+                 await _context.SaveChangesAsync();
+                status = true;
+            }
+            catch (Exception ex)
+            {
+                // Handle the exception
+                // You can log the exception or provide an error message to the user
+                // For example, you can set status to false and return an error message
+                status = false;
+                return Json(new { status = status, message = "An error occurred while saving the event." });
+                
+            }
+
+            //return Json(new { status = status, message = "Event saved successfully." });
+            return RedirectToAction("Index");
         }
 
         [HttpPost]
