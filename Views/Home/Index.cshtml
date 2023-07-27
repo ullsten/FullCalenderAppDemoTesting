@@ -62,8 +62,6 @@
                     }
                 },
 
-
-
                 // Handle date selection
                 select: function (info) {
                     // Get the selected start and end dates
@@ -109,11 +107,25 @@
 
                     // Click event handler for the deleteEvent button
                     $('#editButton').click(function () {
-                       
-                        event.extendedProps.eventId;
+
+                        var eventId = event.extendedProps.eventId;
+                        var eventTitle = event.title;
+                        var eventDescription = event.extendedProps.description;
+                        var eventStart = moment(event.start).format('YYYY-MM-DDTHH:mm:ss');
+                        var eventEnd = moment(event.end).format('YYYY-MM-DDTHH:mm:ss');
+                        var eventColor = event.extendedProps.themeColor;
+
+                        $('#editEventId').val(eventId);
+                        $('#editSubject').val(eventTitle);
+                        $('#editDescription').val(eventDescription);
+                        $('#editStart').val(eventStart);
+                        $('#editEnd').val(eventEnd);
+                        $('#editThemeColor').val(eventColor);
 
                         $('#editEventModal').modal('show');
                         $('#eventModalDetail').modal('hide');
+
+                        console.log("EditID: " + eventId);
                     });
 
                     // Click event handler for the deleteEvent button
