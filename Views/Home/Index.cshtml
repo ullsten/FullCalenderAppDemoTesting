@@ -2,11 +2,9 @@
 <html lang='en'>
 <head>
     <meta charset='utf-8' />
-    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' />
 
     <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js'></script>
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js'></script>
 
     <!-- Add these lines -->
@@ -18,9 +16,46 @@
     <script>
 
         document.addEventListener('DOMContentLoaded', function () {
+
+            var events = []; //store fetch events
+            var selectedEvent = null; //variable to store selected event
+
+            function getEvents() {
+                return {
+                    url: 'Home/GetEvents',
+                    failure: function () {
+                        alert('failed to retrieve events. please try again later');
+                    }
+                };
+            }
+
+            function saveEvents(selectedEvent) {
+                // Get the new start and end dates of the event
+                var newStart = selectedEvent.start;
+                var newEnd = selectedEvent.end;
+
+                console.log("start: " + newStart)
+                console.log("end: " + newEnd)
+                console.log("dropID: " + selectedEvent.extendedProps.eventId)
+
+                // Update the event in the database
+                return $.ajax({
+                    type: 'POST',
+                    url: 'Home/SaveEvent',
+                    data: {
+                        eventId: selectedEvent.extendedProps.eventId,
+                        start: newStart.toISOString(),
+                        end: newEnd.toISOString(),
+                    },
+                    //dataType: 'json', // Add this line to specify the expected data type
+                });
+            }
+
+
             var calendarEl = document.getElementById('calendar');
             var calendar = new FullCalendar.Calendar(calendarEl, {
 
+                contentHeight: 500,
                 timeZone: 'Europe/Stockholm',
                 locale: 'sv', // Set the locale to Swedish
 
@@ -41,6 +76,9 @@
 
                 //set default color for event (bordercolor ?)
                 eventColor: 'green',
+                eventTextColor: 'black',
+                eventBorderColor: 'yellow',
+                eventDisplay: 'auto',
 
                 //set color for event from value in database
                 eventDidMount: function (info) {
@@ -52,22 +90,65 @@
                 },
 
                 editable: true, // Allow events to be dragged and resized
-                selectable: true, // Enable date selection
 
-                // Add events/fetch from action/database
-                events: {
-                    url: 'Home/GetEvents',
-                    failure: function () {
-                        alert('Failed to retrieve events. Please try again later');
+                eventDrop: function (dropInfo) {
+                    console.log('Dropped Event ID:', dropInfo.event.extendedProps.eventId);
+                    console.log('Dropped title: ' + dropInfo.event.title);
+                    console.log('Dropped start: ' + dropInfo.event.start);
+                    console.log('Dropped end: ' + dropInfo.event.end);
+                    console.log('Dropped event: ' + dropInfo.event.extendedProps.themeColor);
+                    console.log('All day: ' + dropInfo.event.extendedProps.isFullDay);
+
+                    // Update the start and end dates of the event
+                    dropInfo.event.setStart(dropInfo.event.start);
+                    dropInfo.event.setEnd(dropInfo.event.end);
+
+                    // Alert showing all event properties
+                    alert(
+                        "Title: " + dropInfo.event.title + "\n" +
+                        "New start: " + dropInfo.event.start.toISOString() + "\n" +
+                        "New end: " + dropInfo.event.end.toISOString() + ".\n" +
+                        "ID: " + dropInfo.event.extendedProps.eventId + "\n" +
+                        "Description: " + dropInfo.event.extendedProps.description + "\n" +
+                        "Theme Color: " + dropInfo.event.extendedProps.themeColor + "\n" + 
+                        "All day: " + dropInfo.event.extendedProps.isFullDay
+                    );
+
+                    if (!confirm("Are you sure about this change?")) {
+                        // Revert the event to its original position
+                        dropInfo.revert();
+                    } else {
+                        // Make an AJAX request to update the event on the server
+                        $.ajax({
+                            url: 'home/SaveEvent', // Replace with your server-side action URL
+                            type: 'POST',
+                            data: JSON.stringify(dropInfo.event), // Send the event object as JSON data
+                            contentType: 'application/json',
+                            success: function (response) {
+                                // Handle the response from the server if needed
+                                // For example, you can show a success message to the user
+                                alert('Event successfully updated.');
+                            },
+                            error: function () {
+                                // Handle the error if the AJAX request fails
+                                // For example, you can show an error message to the user
+                                alert('Failed to update event. Please try again later.');
+                                // Revert the event to its original position
+                                dropInfo.revert();
+                            }
+                        });
                     }
                 },
 
-                // Handle date selection
+                selectable: true, // Enable date selection
+                events: getEvents(), // get events for database
+
+                // Handle date selection for clicked date
                 select: function (info) {
                     // Get the selected start and end dates
                     var start = moment(info.start).format('YYYY-MM-DDTHH:mm:ss');
                     var end = moment(info.end).format('YYYY-MM-DDTHH:mm:ss');
-
+                    
                     // Set the start and end dates in the event creation form
                     document.getElementById('start').value = start;
                     document.getElementById('end').value = end;
@@ -75,25 +156,23 @@
                     // Show the event creation modal
                     $('#CreateEventModal').modal('show');
 
-                    // Show the event creation modal using Bootstrap Modal API
-                    //var modal = new bootstrap.Modal(document.getElementById('eventModal'));
-                    //modal.show();
+                    console.log(end);
                 },
-      
+
                 eventClick: function (info) {
                     // Get the clicked event
-                    var event = info.event;
+                    selectedEvent = info.event;
 
-                    console.log("ID:" + event.extendedProps.eventId);
+                    console.log("ID:" + selectedEvent.extendedProps.eventId);
                     console.log(info.event);
 
                     // Create a div element to display the event details
                     var eventDetails = document.createElement('div');
                     eventDetails.innerHTML = `
-                        <p><strong>Subject:</strong> ${event.title}</p>
-                        <p><strong>Description:</strong> ${event.extendedProps.description}</p>
-                        <p><strong>Start:</strong> ${moment(event.start).format('YYYY-MM-DD HH:mm')}</p>
-                        <p><strong>End:</strong> ${moment(event.end).format('YYYY-MM-DD HH:mm')}</p>
+                          <p><strong>Subject:</strong> ${selectedEvent.title}</p>
+                          <p><strong>Description:</strong> ${selectedEvent.extendedProps.description}</p>
+                          <p><strong>Start:</strong> ${moment(selectedEvent.start).format('YYYY-MM-DD HH:mm')}</p>
+                          <p><strong>End:</strong> ${moment(selectedEvent.end).format('YYYY-MM-DD HH:mm')}</p>
                     `;
 
                     // Show the event details in the modal
@@ -103,17 +182,17 @@
 
                     // show clicked event
                     $('#eventModalDetail').modal('show');
-                    //$('#editEventModal').modal('hide');
 
-                    // Click event handler for the deleteEvent button
+                    // Click event handler for the edit event button
                     $('#editButton').click(function () {
 
-                        var eventId = event.extendedProps.eventId;
-                        var eventTitle = event.title;
-                        var eventDescription = event.extendedProps.description;
-                        var eventStart = moment(event.start).format('YYYY-MM-DDTHH:mm:ss');
-                        var eventEnd = moment(event.end).format('YYYY-MM-DDTHH:mm:ss');
-                        var eventColor = event.extendedProps.themeColor;
+                        //get selected event properties
+                        var eventId = selectedEvent.extendedProps.eventId;
+                        var eventTitle = selectedEvent.title;
+                        var eventDescription = selectedEvent.extendedProps.description;
+                        var eventStart = moment(selectedEvent.start).format('YYYY-MM-DDTHH:mm:ss');
+                        var eventEnd = moment(selectedEvent.end).format('YYYY-MM-DDTHH:mm:ss');
+                        var eventColor = selectedEvent.extendedProps.themeColor;
 
                         $('#editEventId').val(eventId);
                         $('#editSubject').val(eventTitle);
@@ -131,18 +210,23 @@
                     // Click event handler for the deleteEvent button
                     $('#deleteEvent').click(function () {
 
-                        if (event != null && confirm('Are you sure you want to delete this event?')) {
+                        if (selectedEvent != null && confirm('Are you sure you want to delete this event?')) {
 
                             $.ajax({
                                 type: 'POST',
                                 url: 'Home/DeleteEvent', // Replace with the actual URL to delete the event on the server
                                 data: {
-                                    eventId: event.extendedProps.eventId // Pass the event ID to delete
+                                    eventId: selectedEvent.extendedProps.eventId // Pass the event ID to delete
                                 },
                                 success: function (data) {
+                                    if (data.status) {
+                                        $('#eventModalDetail').modal('hide');
+                                    }
                                     // Handle success response, if needed
                                     // Reload the events after successful deletion, you can use 'calendar.refetchEvents()' or other appropriate methods.
+                                    calendar.refetchEvents();
                                     alert('Event successfully deleted.')
+
                                 },
                                 error: function () {
                                     alert('Failed to delete event. Please try again later.');
@@ -151,12 +235,32 @@
                         }
                     });
 
-
                 },
- 
+
+            });
+            // Handle the checkbox change event
+            $('#isFullDay').change(function () {
+                if ($(this).is(':checked')) {
+                    // Checkbox is checked, hide the end date form
+                    $('#endDateForm').hide();
+                    // Set isFullDay to true
+                    $('#isFullDay').val(true);
+                    // Set the "End" date to the value of the "Start" date
+                    var startDateValue = $('#start').val();
+                    $('#end').val(startDateValue);
+                } else {
+                    // Checkbox is unchecked, show the end date form
+                    $('#endDateForm').show();
+                    // Set isFullDay to false
+                    $('#isFullDay').val(false);
+                }
             });
 
+
+
+            // Render calendar
             calendar.render();
+
         });
 
     </script>
@@ -165,7 +269,6 @@
 
     @*Display calandar*@
     <div id='calendar'></div>
-
 
     <!-- Modal for event details with buttons -->
     <div class="modal fade" id="eventModalDetail" tabindex="-1" role="dialog" aria-labelledby="eventModalLabel" aria-hidden="true">
@@ -189,7 +292,7 @@
         </div>
     </div>
 
-    @***********************Event creation modal*****************************@
+    @***********************Event create modal*****************************@
     <div class="modal fade" id="CreateEventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -204,16 +307,20 @@
 
                     <form id="createEventForm" method="post" action="Home/SaveEvent">
                         <div class="form-group">
-                            <input class="form-control" type="text" name="Subject" placeholder="Subject" required />
+                            <input class="form-control" type="text" id="title" name="Subject" placeholder="Subject" required />
                         </div>
                         <div class="form-group mt-2">
                             <label for="start">Start</label>
                             <input class="form-control" type="datetime-local" id="start" name="Start" required />
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group mt-2">
+                            <input class="form-check-input" type="checkbox" id="isFullDay" name="IsFullDay" /> Full day
+                        </div>
+
+                        <div class="form-group" id="endDateForm">
                             <label for="start">End</label>
-                            <input class="form-control" type="datetime-local" id="end" name="End" />
+                            <input class="form-control" type="dateTime-local" id="end" name="End" />
                         </div>
 
                         <div class="form-group mt-2">
@@ -223,11 +330,7 @@
 
                         <div class="form-group mt-2">
                             <label for="ThemeColor">Color</label>
-                            <input class="form-control" type="text" name="ThemeColor" placeholder="Color" />
-                        </div>
-
-                        <div class="form-group mt-2">
-                            <input class="form-check-input" type="checkbox" name="IsFullDay" /> Full day
+                            <input class="form-control" type="text" id="themeColor" name="ThemeColor" placeholder="Color" />
                         </div>
 
                         <div class="form-group mt-2">
@@ -285,49 +388,3 @@
     </div>
 </body>
 </html>
-
-
-@*
-TODO
-edit and delete button
-drag and drop*@
-@*
-
-
-                    //Refresh not working
-                    // Add the event listener for the "Save Changes" button in the edit modal
-                    //document.getElementById('saveChangesBtn').addEventListener('click', function (event) {
-                    //    event.preventDefault(); // Prevent the form from submitting normally
-
-                    //    // Get the form data from the edit modal
-                    //    var formData = new FormData(document.getElementById('editEventForm'));
-
-                    //    // Send an AJAX request to update the event on the server
-                    //    $.ajax({
-                    //        url: 'Home/UpdateEvent', // Replace this with the correct URL for your server-side action
-                    //        method: 'POST',
-                    //        data: formData,
-                    //        processData: false,
-                    //        contentType: false,
-                    //        success: function (response) {
-                    //            console.log(response);
-
-                    //            if (response.status) {
-                    //                // Event updated successfully
-                    //                $('#editModal').modal('hide'); // Hide the edit modal
-                    //                $('#calendar').fullCalendar('refetchEvents'); // Refresh the calendar events
-                    //            } else {
-                    //                // Event update failed
-                    //                // Display an error message to the user (if needed)
-                    //                console.log(response.message);
-                    //            }
-                    //        },
-                    //        error: function (error) {
-                    //            // Handle AJAX error (if needed)
-                    //            console.log(error);
-                    //        }
-                    //    });
-
-                    //});
-
-                        *@

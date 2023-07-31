@@ -38,7 +38,6 @@ namespace FullCalenderApp.Controllers
             return Json(events);
         }
 
-
         [HttpPost]
         public async Task<IActionResult> SaveEvent(Event e)
         {
@@ -49,20 +48,20 @@ namespace FullCalenderApp.Controllers
                 if (e.EventId > 0)
                 {
                     // Update the event
-                    var v =  await _context.Events.Where(a => a.EventId == e.EventId).FirstOrDefaultAsync();
+                    var v = await _context.Events.Where(a => a.EventId == e.EventId).FirstOrDefaultAsync();
                     if (v != null)
                     {
                         v.Subject = e.Subject;
-                        v.Start = e.Start;
-                        v.End = e.End;
                         v.Description = e.Description;
                         v.IsFullDay = e.IsFullDay;
                         v.ThemeColor = e.ThemeColor;
+                        v.Start = e.Start;
+                        v.End = e.End ?? e.Start;
                     }
                 }
                 else
                 {
-                   _context.Events.Add(e);
+                    _context.Events.Add(e);
                 }
 
                 await _context.SaveChangesAsync();

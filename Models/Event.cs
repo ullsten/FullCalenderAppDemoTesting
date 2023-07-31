@@ -12,7 +12,7 @@ namespace FullCalenderApp.Models
         [StringLength(300)]
         public string? Description { get; set; }
         public DateTime Start { get; set; }
-        public DateTime End { get; set; }
+        public DateTime? End { get; set; } = null;
 
         [StringLength(10)]
         public string? ThemeColor { get; set; }
