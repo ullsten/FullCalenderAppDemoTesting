@@ -185,8 +185,7 @@
 
                     // Click event handler for the edit event button
                     $('#editButton').click(function () {
-
-                        //get selected event properties
+                        // Get selected event properties
                         var eventId = selectedEvent.extendedProps.eventId;
                         var eventTitle = selectedEvent.title;
                         var eventDescription = selectedEvent.extendedProps.description;
@@ -194,18 +193,28 @@
                         var eventEnd = moment(selectedEvent.end).format('YYYY-MM-DDTHH:mm:ss');
                         var eventColor = selectedEvent.extendedProps.themeColor;
 
+                        // Get the theme color value from the selected event
+                        var eventColor = selectedEvent.extendedProps.themeColor;
+
+                        // Set form values with selected event properties
                         $('#editEventId').val(eventId);
                         $('#editSubject').val(eventTitle);
                         $('#editDescription').val(eventDescription);
                         $('#editStart').val(eventStart);
                         $('#editEnd').val(eventEnd);
+                        $('#editThemeColor').val(eventColor); // Set the default color in the dropdown
+
+
+                        // Set the selected color in the dropdown
                         $('#editThemeColor').val(eventColor);
 
+                        // Show the edit event modal
                         $('#editEventModal').modal('show');
                         $('#eventModalDetail').modal('hide');
 
                         console.log("EditID: " + eventId);
                     });
+
 
                     // Click event handler for the deleteEvent button
                     $('#deleteEvent').click(function () {
@@ -327,11 +336,25 @@
                             <label for="Description">Description</label>
                             <textarea id="Description" name="Description" class="form-control"></textarea>
                         </div>
-
                         <div class="form-group mt-2">
                             <label for="ThemeColor">Color</label>
-                            <input class="form-control" type="text" id="themeColor" name="ThemeColor" placeholder="Color" />
+                            <select class="form-control" id="themeColor" name="ThemeColor">
+                                <option value="">Select a color</option>
+                                <option value="red">Red</option>
+                                <option value="blue">Blue</option>
+                                <option value="green">Green</option>
+                                <option value="yellow">Yellow</option>
+                                <option value="orange">Orange</option>
+                                <option value="purple">Purple</option>
+                                <option value="pink">Pink</option>
+                                <option value="brown">Brown</option>
+                                <option value="teal">Teal</option>
+                                <option value="indigo">Indigo</option>
+                                <!-- Add more color options as needed -->
+                            </select>
                         </div>
+
+
 
                         <div class="form-group mt-2">
                             <input class="btn btn-primary" type="submit" value="Create Event" />
@@ -342,49 +365,65 @@
         </div>
     </div>
 
-    @**************Edit modal*********************@
-    <div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+    <!-- Modal for editing event -->
+    <div class="modal fade" id="editEventModal" tabindex="-1" role="dialog" aria-labelledby="editEventModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editModalLabel">Edit Event</h5>
+                    <h5 class="modal-title" id="editEventModalLabel">Edit Event</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-
-                    @*method="post" action="Home/UpdateEvent"*@
                     <form id="editEventForm" method="post" action="Home/UpdateEvent">
-                        @*<form id="editEventForm" method="post" action-action="Edit" asp-controller="Events">*@
                         <input type="hidden" id="editEventId" name="EventId" />
                         <div class="form-group">
-                            <label for="editSubject">Subject</label>
-                            <input type="text" id="editSubject" name="Subject" class="form-control" required />
+                            <input class="form-control" type="text" id="editSubject" name="Subject" placeholder="Subject" required />
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mt-2">
+                            <label for="editStart">Start</label>
+                            <input class="form-control" type="datetime-local" id="editStart" name="Start" required />
+                        </div>
+
+                        <div class="form-group mt-2">
+                            <input class="form-check-input" type="checkbox" id="editIsFullDay" name="IsFullDay" /> Full day
+                        </div>
+
+                        <div class="form-group" id="editEndDateForm">
+                            <label for="editEnd">End</label>
+                            <input class="form-control" type="dateTime-local" id="editEnd" name="End" />
+                        </div>
+
+                        <div class="form-group mt-2">
                             <label for="editDescription">Description</label>
                             <textarea id="editDescription" name="Description" class="form-control"></textarea>
                         </div>
-                        <div class="form-group">
-                            <label for="editStart">Start</label>
-                            <input type="datetime-local" id="editStart" name="Start" class="form-control" />
+
+                        <div class="form-group mt-2">
+                            <label for="editThemeColor">Color</label>
+                            <select class="form-control" id="editThemeColor" name="ThemeColor">
+                                <option value="">Select a color</option>
+                                <option value="red">Red</option>
+                                <option value="blue">Blue</option>
+                                <option value="green">Green</option>
+                                <option value="yellow">Yellow</option>
+                                <option value="orange">Orange</option>
+                                <option value="purple">Purple</option>
+                                <option value="pink">Pink</option>
+                                <option value="brown">Brown</option>
+                                <option value="teal">Teal</option>
+                                <option value="indigo">Indigo</option>
+                                <!-- Add more color options as needed -->
+                            </select>
                         </div>
-                        <div class="form-group">
-                            <label for="editEnd">End</label>
-                            <input type="datetime-local" id="editEnd" name="End" class="form-control" />
+
+                        <div class="form-group mt-2">
+                            <input class="btn btn-primary" type="submit" value="Save Changes" />
                         </div>
-                        <div class="form-group">
-                            <label for="editThemeColor">Theme Color</label>
-                            <input type="text" id="editThemeColor" name="ThemeColor" class="form-control" />
-                        </div>
-                        <div class="form-group">
-                            <label for="editIsFullDay">Is Full Day</label>
-                            <input type="checkbox" id="editIsFullDay" name="IsFullDay" class="form-check-input" />
-                        </div>
-                        <input type="submit" value="Save Changes" class="btn btn-primary" id="saveChangesBtn" />
                     </form>
                 </div>
             </div>
         </div>
     </div>
+
 </body>
 </html>
