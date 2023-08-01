@@ -169,11 +169,11 @@
                     // Create a div element to display the event details
                     var eventDetails = document.createElement('div');
                     eventDetails.innerHTML = `
-                          <p><strong>Subject:</strong> ${selectedEvent.title}</p>
-                          <p><strong>Description:</strong> ${selectedEvent.extendedProps.description}</p>
-                          <p><strong>Start:</strong> ${moment(selectedEvent.start).format('YYYY-MM-DD HH:mm')}</p>
-                          <p><strong>End:</strong> ${moment(selectedEvent.end).format('YYYY-MM-DD HH:mm')}</p>
-                    `;
+            <p><strong>Subject:</strong> ${selectedEvent.title}</p>
+            <p><strong>Description:</strong> ${selectedEvent.extendedProps.description}</p>
+            <p><strong>Start:</strong> ${moment(selectedEvent.start).format('YYYY-MM-DD')}</p>
+            <p><strong>End:</strong> ${selectedEvent.extendedProps.isFullDay ? moment(selectedEvent.start).format('YYYY-MM-DD') : moment(selectedEvent.end).format('YYYY-MM-DD HH:mm')}</p>
+        `;
 
                     // Show the event details in the modal
                     var eventModalBody = document.getElementById('eventModalBody');
@@ -181,7 +181,7 @@
                     eventModalBody.appendChild(eventDetails);
 
                     // show clicked event
-                    $('#eventModalDetail').modal('show');
+                    $('#eventDetailModal').modal('show');
 
                     // Click event handler for the edit event button
                     $('#editButton').click(function () {
@@ -192,9 +192,7 @@
                         var eventStart = moment(selectedEvent.start).format('YYYY-MM-DDTHH:mm:ss');
                         var eventEnd = moment(selectedEvent.end).format('YYYY-MM-DDTHH:mm:ss');
                         var eventColor = selectedEvent.extendedProps.themeColor;
-
-                        // Get the theme color value from the selected event
-                        var eventColor = selectedEvent.extendedProps.themeColor;
+                        var isFullDay = selectedEvent.extendedProps.isFullDay; // Get the isFullDay property
 
                         // Set form values with selected event properties
                         $('#editEventId').val(eventId);
@@ -204,13 +202,19 @@
                         $('#editEnd').val(eventEnd);
                         $('#editThemeColor').val(eventColor); // Set the default color in the dropdown
 
+                        // Set the editIsFullDay checkbox based on the isFullDay property
+                        $('#editIsFullDay').prop('checked', isFullDay);
 
-                        // Set the selected color in the dropdown
-                        $('#editThemeColor').val(eventColor);
 
+                        if(isFullDay){
+                            $('#editEndDateForm').hide();
+                        }else{
+                            $('#editEndDateForm').show();
+                            $('#editEnd').val(eventEnd);
+                        }
                         // Show the edit event modal
                         $('#editEventModal').modal('show');
-                        $('#eventModalDetail').modal('hide');
+                        $('#eventDetailModal').modal('hide');
 
                         console.log("EditID: " + eventId);
                     });
@@ -229,7 +233,7 @@
                                 },
                                 success: function (data) {
                                     if (data.status) {
-                                        $('#eventModalDetail').modal('hide');
+                                        $('#eventDetailModal').modal('hide');
                                     }
                                     // Handle success response, if needed
                                     // Reload the events after successful deletion, you can use 'calendar.refetchEvents()' or other appropriate methods.
@@ -247,29 +251,29 @@
                 },
 
             });
+
             // Handle the checkbox change event
-            $('#isFullDay').change(function () {
+            $('#isFullDay, #editIsFullDay').change(function () {
                 if ($(this).is(':checked')) {
                     // Checkbox is checked, hide the end date form
-                    $('#endDateForm').hide();
+                    $('#endDateForm, #editEndDateForm').hide();
                     // Set isFullDay to true
-                    $('#isFullDay').val(true);
+                    $('#isFullDay, #editIsFullDay').val(true);
                     // Set the "End" date to the value of the "Start" date
                     var startDateValue = $('#start').val();
-                    $('#end').val(startDateValue);
+                    $('#end, #editEnd').val(startDateValue);
+                    // Set editEnd to editStart
+                    $('#editEnd').val($('#editStart').val());
                 } else {
                     // Checkbox is unchecked, show the end date form
-                    $('#endDateForm').show();
+                    $('#endDateForm, #editEndDateForm').show();
                     // Set isFullDay to false
-                    $('#isFullDay').val(false);
+                    $('#isFullDay, #editIsFullDay').val(false);
                 }
             });
 
-
-
             // Render calendar
             calendar.render();
-
         });
 
     </script>
@@ -280,7 +284,7 @@
     <div id='calendar'></div>
 
     <!-- Modal for event details with buttons -->
-    <div class="modal fade" id="eventModalDetail" tabindex="-1" role="dialog" aria-labelledby="eventModalLabel" aria-hidden="true">
+    <div class="modal fade" id="eventDetailModal" tabindex="-1" role="dialog" aria-labelledby="eventModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -353,9 +357,6 @@
                                 <!-- Add more color options as needed -->
                             </select>
                         </div>
-
-
-
                         <div class="form-group mt-2">
                             <input class="btn btn-primary" type="submit" value="Create Event" />
                         </div>

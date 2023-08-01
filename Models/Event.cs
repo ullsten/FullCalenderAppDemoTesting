@@ -6,7 +6,8 @@ namespace FullCalenderApp.Models
     {
         public int EventId { get; set; }
 
-        [StringLength(100)]
+        [StringLength(100, ErrorMessage = "Please enter a title")]
+        [Required(ErrorMessage = "Title is required")]
         public string Subject { get; set; }
 
         [StringLength(300)]
