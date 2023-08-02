@@ -24,7 +24,13 @@
                 return {
                     url: 'Home/GetEvents',
                     failure: function () {
-                        alert('failed to retrieve events. please try again later');
+                        alert('Failed to retrieve events. Please try again later.');
+                    },
+                    eventDataTransform: function (eventData) {
+                        // Modify the event data here
+                        eventData.backgroundColor = eventData.themeColor; // set backgroundColor for event from database
+
+                        return eventData;
                     }
                 };
             }
@@ -51,15 +57,17 @@
                 });
             }
 
-
             var calendarEl = document.getElementById('calendar');
             var calendar = new FullCalendar.Calendar(calendarEl, {
 
-                contentHeight: 500,
+                //contentHeight: 800,
                 timeZone: 'Europe/Stockholm',
                 locale: 'sv', // Set the locale to Swedish
 
                 initialView: 'dayGridMonth',
+                //initialView: 'multiMonthYear',
+                //multiMonthMaxColumns: 2, // force a single column
+                
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
@@ -75,73 +83,16 @@
                 },
 
                 //set default color for event (bordercolor ?)
-                eventColor: 'green',
-                eventTextColor: 'black',
-                eventBorderColor: 'yellow',
+                //eventColor: 'green',
+                //eventTextColor: 'black',
+                //eventBorderColor: 'yellow',
                 eventDisplay: 'auto',
-
-                //set color for event from value in database
-                eventDidMount: function (info) {
-                    // Get the event object
-                    var event = info.event;
-
-                    // Set the background color for the event using the themeColor property
-                    event.setProp('backgroundColor', event.extendedProps.themeColor);
-                },
-
+                displayEventTime: false,
+                dayMaxEvents: true, // when too many events in a day, show the popover  
                 editable: true, // Allow events to be dragged and resized
-
-                eventDrop: function (dropInfo) {
-                    console.log('Dropped Event ID:', dropInfo.event.extendedProps.eventId);
-                    console.log('Dropped title: ' + dropInfo.event.title);
-                    console.log('Dropped start: ' + dropInfo.event.start);
-                    console.log('Dropped end: ' + dropInfo.event.end);
-                    console.log('Dropped event: ' + dropInfo.event.extendedProps.themeColor);
-                    console.log('All day: ' + dropInfo.event.extendedProps.isFullDay);
-
-                    // Update the start and end dates of the event
-                    dropInfo.event.setStart(dropInfo.event.start);
-                    dropInfo.event.setEnd(dropInfo.event.end);
-
-                    // Alert showing all event properties
-                    alert(
-                        "Title: " + dropInfo.event.title + "\n" +
-                        "New start: " + dropInfo.event.start.toISOString() + "\n" +
-                        "New end: " + dropInfo.event.end.toISOString() + ".\n" +
-                        "ID: " + dropInfo.event.extendedProps.eventId + "\n" +
-                        "Description: " + dropInfo.event.extendedProps.description + "\n" +
-                        "Theme Color: " + dropInfo.event.extendedProps.themeColor + "\n" + 
-                        "All day: " + dropInfo.event.extendedProps.isFullDay
-                    );
-
-                    if (!confirm("Are you sure about this change?")) {
-                        // Revert the event to its original position
-                        dropInfo.revert();
-                    } else {
-                        // Make an AJAX request to update the event on the server
-                        $.ajax({
-                            url: 'home/SaveEvent', // Replace with your server-side action URL
-                            type: 'POST',
-                            data: JSON.stringify(dropInfo.event), // Send the event object as JSON data
-                            contentType: 'application/json',
-                            success: function (response) {
-                                // Handle the response from the server if needed
-                                // For example, you can show a success message to the user
-                                alert('Event successfully updated.');
-                            },
-                            error: function () {
-                                // Handle the error if the AJAX request fails
-                                // For example, you can show an error message to the user
-                                alert('Failed to update event. Please try again later.');
-                                // Revert the event to its original position
-                                dropInfo.revert();
-                            }
-                        });
-                    }
-                },
-
                 selectable: true, // Enable date selection
-                events: getEvents(), // get events for database
+
+                events: getEvents(), // get events for database to calendar
 
                 // Handle date selection for clicked date
                 select: function (info) {
@@ -158,6 +109,43 @@
 
                     console.log(end);
                 },
+                eventDrop: function (dropInfo) {
+                    // Retrieve the necessary data from the event
+                    var eventId = dropInfo.event.extendedProps.eventId;
+                    var newStart = dropInfo.event.start;
+                    var newEnd = dropInfo.event.end;
+
+                    console.log("Start:" + newStart);
+                    console.log("End:" + newEnd);
+                    // Show the confirmation alert to the user
+                    if (!confirm("Are you sure about this change?")) {
+                        // Revert the event to its original position
+                        dropInfo.revert();
+                    } else {
+                        // Make an AJAX request to update the event on the server
+                        $.ajax({
+                            url: 'Home/SaveEvent', // Replace with your server-side action URL
+                            type: 'POST',
+                            data: {
+                                eventId: eventId,
+                                start: newStart.toISOString(),
+                                end: newEnd.toISOString(),
+                            },
+                            success: function (response) {
+                                // Handle the response from the server if needed
+                                // For example, you can show a success message to the user
+                                alert('Event successfully updated.');
+                            },
+                            error: function () {
+                                // Handle the error if the AJAX request fails
+                                // For example, you can show an error message to the user
+                                alert('Failed to update event. Please try again later.');
+                                // Revert the event to its original position
+                                dropInfo.revert();
+                            }
+                        });
+                    }
+                },
 
                 eventClick: function (info) {
                     // Get the clicked event
@@ -169,11 +157,11 @@
                     // Create a div element to display the event details
                     var eventDetails = document.createElement('div');
                     eventDetails.innerHTML = `
-            <p><strong>Subject:</strong> ${selectedEvent.title}</p>
-            <p><strong>Description:</strong> ${selectedEvent.extendedProps.description}</p>
-            <p><strong>Start:</strong> ${moment(selectedEvent.start).format('YYYY-MM-DD')}</p>
-            <p><strong>End:</strong> ${selectedEvent.extendedProps.isFullDay ? moment(selectedEvent.start).format('YYYY-MM-DD') : moment(selectedEvent.end).format('YYYY-MM-DD HH:mm')}</p>
-        `;
+                        <p><strong>Subject:</strong> ${selectedEvent.title}</p>
+                        <p><strong>Description:</strong> ${selectedEvent.extendedProps.description}</p>
+                        <p><strong>Start:</strong> ${moment(selectedEvent.start).format('YYYY-MM-DD:mm:ss')}</p>
+                                        <p><strong>End:</strong> ${selectedEvent.extendedProps.isFullDay ? moment(selectedEvent.start).format('YYYY-MM-DD:mm:ss') : moment(selectedEvent.end).format('YYYY-MM-DD:mm:ss')}</p>
+                    `;
 
                     // Show the event details in the modal
                     var eventModalBody = document.getElementById('eventModalBody');
@@ -323,7 +311,7 @@
                             <input class="form-control" type="text" id="title" name="Subject" placeholder="Subject" required />
                         </div>
                         <div class="form-group mt-2">
-                            <label for="start">Start</label>
+                            <label for="start" class="control-label">Start</label>
                             <input class="form-control" type="datetime-local" id="start" name="Start" required />
                         </div>
 
