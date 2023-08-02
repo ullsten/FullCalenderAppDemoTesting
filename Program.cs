@@ -12,7 +12,6 @@ namespace FullCalenderApp
             //Load env file
             DotNetEnv.Env.Load();
 
-
             // Add services to the container.
             //Get connectionstring from env file
             var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
