@@ -25,16 +25,16 @@ namespace FullCalenderApp.Controllers
         {
             var events = await _context.Events
                 .Select(e => new EventGetViewModel
-            {
-                EventId = e.EventId,
-                Title = e.Subject,
-                Start = e.Start,
-                End = e.End,
-                Description = e.Description,
-                ThemeColor = e.ThemeColor,
-                IsFullDay = e.IsFullDay,
+                {
+                    EventId = e.EventId,
+                    Title = e.Subject,
+                    Start = e.Start,
+                    End = e.End,
+                    Description = e.Description,
+                    ThemeColor = e.ThemeColor,
+                    IsFullDay = e.IsFullDay,
               
-            }).ToListAsync();
+                }).ToListAsync();
 
             return Json(events);
         }

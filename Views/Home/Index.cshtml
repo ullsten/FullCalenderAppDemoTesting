@@ -131,14 +131,27 @@
 
                     console.log(end);
                 },
+
                 eventDrop: function (dropInfo) {
                     // Retrieve the necessary data from the event
                     var eventId = dropInfo.event.extendedProps.eventId;
                     var newStart = dropInfo.event.start;
                     var newEnd = dropInfo.event.end;
 
-                    console.log("Start:" + newStart);
-                    console.log("End:" + newEnd);
+                    // Other properties of the event
+                    var subject = dropInfo.event.title;
+                    var description = dropInfo.event.extendedProps.description;
+                    var isFullDay = dropInfo.event.extendedProps.isFullDay;
+                    var themeColor = dropInfo.event.backgroundColor;
+
+                    console.log(eventId);
+                    console.log(newStart);
+                    console.log(newEnd);
+                    console.log(subject);
+                    console.log(description);
+                    console.log(isFullDay);
+                    console.log(themeColor);
+                    
                     // Show the confirmation alert to the user
                     if (!confirm("Are you sure about this change?")) {
                         // Revert the event to its original position
@@ -150,15 +163,21 @@
                             type: 'POST',
                             data: {
                                 eventId: eventId,
-                                start: newStart.toISOString(),
-                                end: newEnd.toISOString(),
+                                Subject: subject,
+                                Description: description,
+                                IsFullDay: isFullDay,
+                                ThemeColor: themeColor,
+                                Start: newStart.toISOString(),
+                                End: newEnd.toISOString(),
                             },
                             success: function (response) {
+                                //console.log('AJAX Success:', response);
                                 // Handle the response from the server if needed
                                 // For example, you can show a success message to the user
-                                alert('Event successfully updated.');
+                                alert('Event dates successfully updated.' + newStart + newEnd);
                             },
                             error: function () {
+                                console.log('AJAX Error');
                                 // Handle the error if the AJAX request fails
                                 // For example, you can show an error message to the user
                                 alert('Failed to update event. Please try again later.');
