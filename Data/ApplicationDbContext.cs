@@ -11,6 +11,7 @@ namespace FullCalenderApp.Data
         }
 
         public DbSet<Event> Events { get; set; }
+        public DbSet<Color> Colors { get; set; }
     }
 }
 

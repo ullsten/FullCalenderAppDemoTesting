@@ -42,6 +42,14 @@ namespace FullCalenderApp
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
+            // Call the Seed method from SeedData class to perform database seeding
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                var dbContext = services.GetRequiredService<ApplicationDbContext>();
+                SeedData.Seed(dbContext);
+            }
+
             app.Run();
         }
     }

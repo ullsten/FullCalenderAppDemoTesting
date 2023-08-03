@@ -1,0 +1,10 @@
+﻿/* customStyle.css */
+
+/* Target the calendar container */
+#calendar {
+    background-color: #f2f2f2; /* Change the background color */
+    border-radius: 10px; /* Apply rounded corners to the container */
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* Add a shadow effect */
+    padding: 20px; /* Add some padding to the container */
+    margin-bottom: 60px;
+}

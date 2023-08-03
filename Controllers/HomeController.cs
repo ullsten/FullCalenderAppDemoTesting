@@ -2,6 +2,7 @@
 using FullCalenderApp.Models;
 using FullCalenderApp.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
@@ -16,8 +17,10 @@ namespace FullCalenderApp.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            var colors = await _context.Colors.ToListAsync();
+            ViewBag.ColorsList = new SelectList(colors, "ColorName", "ColorName");
             return View();
         }
 
